@@ -11,8 +11,13 @@
  * To compile:
  * gcc dump-sdbus.c -lsystemd -o dump-sdbus
  *
- * Author : RAMJANALLY Ghoulseine
- * Date : 2020/04/13 
+ * Copyright (C) 2020 RAMJANALLY Ghoulseine
+ * This program is free software: you can redistribute it and/or modify it under 
+ * the terms of the GNU General Public License as published by the Free Software Foundation, 
+ * either version 3 of the License, or (at your option) any later version. 
+ *
+ * Creation Date : 2020/04/13 
+ * Modified Date : 2020/04/16
  * ref: https://www.freedesktop.org/wiki/Software/dbus/
  *
  */
@@ -23,6 +28,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+
+#define DUMP_START -1
+#define DUMP_END -2
 
 const char *__SD_BUS_DESTINATION = "org.freedesktop.systemd1";
 const char *__SD_BUS_OBJECT = "/org/freedesktop/systemd1/unit/foobar_2eservice";
@@ -122,16 +130,22 @@ print_value(sd_bus_message *m, char type)
 static int 
 dump_info(sd_bus_message *m, int nb_containers) 
 {
-    int r,i;
+    int r;
     const char *contents = NULL;
     char type;
+    bool f=false;
 
-    if(nb_containers == -1)
-      printf("[\n");
+    if(nb_containers == DUMP_START)
+	    f=true;
 
     r = sd_bus_message_peek_type(m, &type, &contents);
     if (r < 0)
        return r;
+    if (r == 0)
+    {
+       if(nb_containers == DUMP_END)
+          return 0;
+    }
 
     while(1)
     {
@@ -141,6 +155,7 @@ dump_info(sd_bus_message *m, int nb_containers)
         if (r < 0)
           return r;
           nb_containers++;
+	f=true;
       }
       r = sd_bus_message_peek_type(m, &type, &contents);
       if (r < 0)
@@ -156,15 +171,18 @@ dump_info(sd_bus_message *m, int nb_containers)
       }
 
       print_value(m,type);
-      printf(" ");
+      if(f!=true)
+        printf(" ");
+
+      f=false;
     }
+
     if(nb_containers == 0)
       printf("\n");
-    if(nb_containers == -1)
-    {
-        nb_containers = 0;
-	printf("]\n");
-    }
+
+    if(nb_containers == DUMP_START)
+        nb_containers = DUMP_END;
+
     dump_info(m,nb_containers);
 }
 
@@ -203,7 +221,7 @@ main(void)
 	   return ret;
 	}
 
-        dump_info(reply,-1);
+        dump_info(reply,DUMP_START);
 
         sd_bus_error_free(&error);
         sd_bus_unref(bus);
