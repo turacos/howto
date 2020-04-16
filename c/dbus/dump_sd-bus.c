@@ -123,6 +123,7 @@ print_value(sd_bus_message *m, char type)
     default:
          printf("Type is not defined !");
   }
+  return 0;
 }
 
 static int 
@@ -152,7 +153,7 @@ dump_info(sd_bus_message *m, int nb_containers)
         r = sd_bus_message_enter_container(m, type, contents);
         if (r < 0)
           return r;
-          nb_containers++;
+        nb_containers++;
 	f=true;
       }
       r = sd_bus_message_peek_type(m, &type, &contents);
@@ -168,7 +169,7 @@ dump_info(sd_bus_message *m, int nb_containers)
          break;
       }
 
-      print_value(m,type);
+      r = print_value(m,type);
       if(f!=true)
         printf(" ");
 
@@ -181,7 +182,8 @@ dump_info(sd_bus_message *m, int nb_containers)
     if(nb_containers == DUMP_START)
         nb_containers = DUMP_END;
 
-    dump_info(m,nb_containers);
+    r = dump_info(m,nb_containers);
+    return r;
 }
 
 int 
@@ -191,14 +193,12 @@ main(void)
         sd_bus_error error = SD_BUS_ERROR_NULL;
         sd_bus_message *reply = NULL;
 
-	const char *contents;
 	int ret;
-	char type;
 
         ret = sd_bus_default_system(&bus);
         if (ret < 0)
 	{
-           fprintf(stderr, "Error dbus connection defaul system %d -  %s\n",error, strerror(-ret));
+           fprintf(stderr, "Error dbus connection defaul system %s -  %s\n", error.name, error.message);
 	   return ret;
 	}
 
@@ -215,11 +215,11 @@ main(void)
 
         if (ret < 0)
 	{
-           fprintf(stderr, "Error bus call method %s\n", strerror(-ret));
+           fprintf(stderr, "Error bus call method %s - %s\n", error.name, error.message);
 	   return ret;
 	}
 
-        dump_info(reply,DUMP_START);
+        ret = dump_info(reply,DUMP_START);
 
         sd_bus_error_free(&error);
         sd_bus_unref(bus);
