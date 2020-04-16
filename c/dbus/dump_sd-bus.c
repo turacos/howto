@@ -25,9 +25,7 @@
 
 #include <systemd/sd-bus.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
 
 #define DUMP_START -1
 #define DUMP_END -2
