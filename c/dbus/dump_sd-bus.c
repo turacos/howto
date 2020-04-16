@@ -224,6 +224,6 @@ main(void)
         sd_bus_error_free(&error);
         sd_bus_unref(bus);
 
-        return 0;
+        return ret;
 }
 
