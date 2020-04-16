@@ -220,6 +220,9 @@ main(void)
 	}
 
         ret = dump_info(reply,DUMP_START);
+	if ( ret < 0 )
+           fprintf(stderr, "Error in dump call, program abort !\n");
+	  
 
         sd_bus_error_free(&error);
         sd_bus_unref(bus);
